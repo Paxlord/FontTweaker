@@ -12,14 +12,16 @@ typedef int (*fontprint_t)(char*, ...);
 #define u16 uint16_t
 #define u32 uint32_t
 
+#define NO_CONFIG 0
+
 bool myCheckBox = false;
 int counter = 0;
-int font_size_x = 17;
+int font_size_x = 16;
 int font_size_y = 18;
 int trailing_spaces = 22;
 char buf_1[32];
 char buf_2[32];
-uint8_t inventory_width = 10;
+uint8_t inventory_width = 12;
 uint8_t size_min = 0;
 uint8_t size_max = 48;
 float og_window_offset = 640.0;
@@ -30,24 +32,26 @@ int cur_index = 0;
 uint32_t font_struct = 0xE3CBD64;
 uint32_t font_print_addy = 0xB70CF0;
 bool renderCustomFont = false;
+u32 set_deco_menu_string = 0x19964D4;
+int set_deco_name_spaces = 16;
 
 uint32_t inventory_size_addy_1 = 0x1A43256;
 uint32_t inventory_size_addy_2 = 0x1A43276;
 
 /// POS OFFSETS
-u32 weapon_list_submenu1_zenny_x_offsetvalue = 0;
+u32 weapon_list_submenu1_zenny_x_offsetvalue = 8;
 u32 weapon_list_submenu1_zenny_x_fulloffset = 178 + weapon_list_submenu1_zenny_x_offsetvalue;
-u32 armor_list_submenu1_zenny_x_offsetvalue = 0;
+u32 armor_list_submenu1_zenny_x_offsetvalue = 8;
 u32 armor_list_submenu1_zenny_x_fulloffset = 178 + armor_list_submenu1_zenny_x_offsetvalue;
 
 /// FONT SIZES
 u8 weapon_list_submenu_1_x = 17;
-u8 weapon_list_submenu_1_y = 17;
+u8 weapon_list_submenu_1_y = 15;
 u8 gear_status_list_x = 16;
 u8 gear_status_list_y = 16;
 u8 gear_title_x = 18;
 u8 gear_title_y = 18;
-u8 gear_name_2_x = 20;
+u8 gear_name_2_x = 16;
 u8 gear_name_2_y = 20;
 u8 smithy_main_menu_x = 20;
 u8 smithy_main_menu_y = 20;
@@ -57,7 +61,7 @@ int material_qty_pos_x = 32;
 
 /// TRAILING SPACES
 int weapon_name_trailing_spaces = 24;
-int weapon_name_2_trailing_spaces = 20;
+int weapon_name_2_trailing_spaces = 27;
 char weapon_list_submenu1_buf[32];
 
 /// TEMPLATE STRING OFFSETS
@@ -152,6 +156,39 @@ void __declspec(naked) hk_combineSelection() {
 		mov eax, 0x140
 		add eax, [additional_qty_offset]
 		jmp hk_ret_combineSelection
+	}
+}
+
+u32 jmp_sub_42EFA0_42F172 = 0x42F172;
+u32 ret_sub_42EFA0_42F177 = 0x42F177;
+u32 quest_reward_x_offset = 0;
+void __declspec(naked) hk_sub_42EFA0_42F172() {
+	__asm {
+		add edi, 0x3C
+		sub ebx, [quest_reward_x_offset]
+		push edi
+		push ebx
+		jmp ret_sub_42EFA0_42F177
+	}
+}
+
+
+// DECO EQUIP
+u32 jmp_sub_49C960_49C99C = 0x49C99C;
+u32 ret_sub_49C960_49C9A4 = 0x49C9A4;
+u8 deco_font_size_x = 18;
+u8 deco_font_size_y = 18;
+void __declspec(naked) hk_sub_49C960_49C99C() {
+	__asm {
+		mov cx, word ptr[ebp + 8]
+		mov dx, word ptr[ebp + 0xC]
+		push ecx
+		movzx ecx, [deco_font_size_x]
+		mov byte ptr [eax + 0x18], cl
+		movzx ecx, [deco_font_size_y]
+		mov byte ptr [eax + 0x19], cl
+		pop ecx
+		jmp ret_sub_49C960_49C9A4
 	}
 }
 
@@ -402,7 +439,7 @@ void __declspec(naked) hk_sub_521DA0_5224C7() {
 //Smithy > create armor > armor list name
 u32 jmp_sub_537850_537914 = 0x537914;
 u32 ret_sub_537850_53791A = 0x53791A;
-u8 armor_list_name_font_x = 0x16;
+u8 armor_list_name_font_x = 15;
 u8 armor_list_name_font_y = 0x11;
 void __declspec(naked) hk_sub_537850_537914() {
 	__asm {
@@ -420,8 +457,8 @@ void __declspec(naked) hk_sub_537850_537914() {
 //Smithy > create armor > menu 2
 u32 jmp_sub_536F80_537103 = 0x537103;
 u32 ret_sub_536F80_537109 = 0x537109;
-u8 armor_list_2_font_x = 0x8;
-u8 armor_list_2_font_y = 0x14;
+u8 armor_list_2_font_x = 16;
+u8 armor_list_2_font_y = 20;
 void __declspec(naked) hk_sub_536F80_537103() {
 	__asm {
 		mov word ptr[eax + 0x18], 0x1414
@@ -437,7 +474,7 @@ void __declspec(naked) hk_sub_536F80_537103() {
 
 u32 jmp_sub_536F80_53770A = 0x53770A;
 u32 ret_sub_536F80_53770F = 0x53770F;
-int armor_list_2_spaces = 20;
+int armor_list_2_spaces = 27;
 char armor_list_2_space_buf[32] = "%-56s %6d%s";
 void __declspec(naked) hk_sub_536F80_53770A() {
 	__asm {
@@ -461,6 +498,23 @@ void __declspec(naked) hk_sub_973A50_973BC9() {
 		mov byte ptr[esi + 0x19], cl
 		pop ecx
 		jmp ret_sub_973A50_973BCF
+	}
+}
+
+u32 jmp_sub_973A50_973D73 = 0x973D73;
+u32 ret_sub_973A50_973D79 = 0x973D79;
+u32 font_struct_addy = 0xE3CBD64;
+u16 plus_number_x_offset = 0;
+void __declspec(naked) hk_sub_973A50_973D73() {
+	__asm {
+		pushad
+		mov ecx, font_struct_addy
+		mov ecx, dword ptr [ecx]
+		mov ax, plus_number_x_offset
+		add word ptr [ecx+12], ax
+		popad
+		mov eax, [edx + 0x994]
+		jmp ret_sub_973A50_973D79
 	}
 }
 
@@ -571,15 +625,25 @@ void BaseMod::OnAttach() {
 	ret_sub_521DA0_522311 += mhfdll_addy;
 	binutils::DetourJMP((void*)jmp_sub_521DA0_522307, (void*)hk_sub_521DA0_522307, 5);
 
+	jmp_sub_42EFA0_42F172 += mhfdll_addy;
+	ret_sub_42EFA0_42F177 += mhfdll_addy;
+	binutils::DetourJMP((void*)jmp_sub_42EFA0_42F172, (void*)hk_sub_42EFA0_42F172, 0);
+
+	jmp_sub_49C960_49C99C += mhfdll_addy;
+	ret_sub_49C960_49C9A4 += mhfdll_addy;
+	binutils::DetourJMP((void*)jmp_sub_49C960_49C99C, (void*)hk_sub_49C960_49C99C, 3);
+
 	combine_window_off_addy += mhfdll_addy;
 	combine_float_off_addy += mhfdll_addy;
 
 	caravan_quest_cp_string += mhfdll_addy;
 	material_list_qty_string_1 += mhfdll_addy;
 	material_list_qty_string_2 += mhfdll_addy;
+	set_deco_menu_string += mhfdll_addy;
 	sprintf((char*)caravan_quest_cp_string, "%%7s");
 	sprintf((char*)material_list_qty_string_1, "%%s%%2d(%%3d)/%%3d");
 	sprintf((char*)material_list_qty_string_2, "%%s%%2d(%%3d)/%%2d");
+	sprintf((char*)set_deco_menu_string, "%%-%ds%%s%%2d(%%3d)", set_deco_name_spaces);
 	//sprintf((char*)gear_name_list_1_str, "%%-%ds %%6d%%s", weapon_name_2_trailing_spaces);
 	
 	//Patching first window gear list font size
@@ -609,6 +673,11 @@ void BaseMod::OnAttach() {
 	jmp_sub_973A50_973BC9 += mhfdll_addy;
 	ret_sub_973A50_973BCF += mhfdll_addy;
 	binutils::DetourJMP((void*)jmp_sub_973A50_973BC9, (void*)hk_sub_973A50_973BC9, 1);
+
+	jmp_sub_973A50_973D73 += mhfdll_addy;
+	ret_sub_973A50_973D79 += mhfdll_addy;
+	font_struct_addy += mhfdll_addy;
+	binutils::DetourJMP((void*)jmp_sub_973A50_973D73, (void*)hk_sub_973A50_973D73, 1);
 }
 
 
@@ -635,6 +704,7 @@ bool is_duplicate(char* str) {
 
 //Has access to the main ImGui context, can draw anything related to the mod in there
 void BaseMod::DrawModMenu() {
+#if NO_CONFIG == 0
 	if (ImGui::CollapsingHeader(DISPLAY_NAME.c_str())) {
 		ImGui::Text("Smithy Params");
 		ImGui::SliderInt("Font Size X", &font_size_x, 1, 48);
@@ -696,6 +766,7 @@ void BaseMod::DrawModMenu() {
 		ImGui::Text("Smithy/Cat Smithy... > Deco/Cuff > Skill names");
 		ImGui::SliderScalar("Skill Font X", ImGuiDataType_U8, &skill_font_x, &size_min, &size_max);
 		ImGui::SliderScalar("Skill Font Y", ImGuiDataType_U8, &skill_font_y, &size_min, &size_max);
+		ImGui::SliderScalar("Skill Font plus X offset", ImGuiDataType_U8, &plus_number_x_offset, &size_min, &size_max);
 
 
 		ImGui::Text("Inventory Params");
@@ -709,13 +780,22 @@ void BaseMod::DrawModMenu() {
 			*(float*)(combine_float_off_addy) = 270.0 - (float)additional_offset;
 			*(short*)(combine_window_off_addy) = 270 - (short)additional_offset;
 		}
-		if (ImGui::Button("Print Stuff")) {
-			print_stuff((char*)"Hello world", 1250, 476);
+
+		ImGui::Text("Quest params");
+		ImGui::SliderScalar("Rewards X pos", ImGuiDataType_U8, &quest_reward_x_offset, &size_min, &size_max);
+
+		ImGui::Text("Set Deco Menu");
+		if (ImGui::SliderInt("Deco Name Spaces", &set_deco_name_spaces, 1, 48)) {
+			sprintf((char*)set_deco_menu_string, "%%-%ds%%s%%2d(%%3d)", set_deco_name_spaces);
 		}
+		ImGui::SliderScalar("Deco Font X", ImGuiDataType_U8, &deco_font_size_x, &size_min, &size_max);
+		ImGui::SliderScalar("Deco Font Y", ImGuiDataType_U8, &deco_font_size_y, &size_min, &size_max);
+
 		//ImGui::Checkbox("Render Custom Font", &renderCustomFont);
 		//ImGui::InputText("Format string 1", buf_1, 32);
 		//ImGui::InputText("Format string 2", buf_2, 32);
 	}
+#endif
 }
 
 void BaseMod::DrawUI(bool show_menu) {
